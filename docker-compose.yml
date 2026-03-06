@@ -1,14 +1,71 @@
-version: '3.8'
+version: "3.8"
+
 services:
+  # Zookeeper for Kafka
   zookeeper:
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
 
+  # Kafka Broker
   kafka:
     image: wurstmeister/kafka
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
       - "9092:9092"
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: localhost
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+
+  # MongoDB
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+
+  # Ride Event Producer
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile-producer
+    depends_on:
+      - kafka
+
+  # Stream Processor
+  processor:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile-processor
+    depends_on:
+      - kafka
+      - mongo
+
+  # FastAPI GraphQL API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+
+  # Prometheus for metrics scraping
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
