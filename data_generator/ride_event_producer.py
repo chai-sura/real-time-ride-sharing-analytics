@@ -1,30 +1,27 @@
+from kafka import KafkaProducer, errors
 import json
-import time
-import random
-from kafka import KafkaProducer
 from faker import Faker
+import time
 
 fake = Faker()
 
-producer = KafkaProducer(
-    bootstrap_servers='localhost:9092',
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')
-)
-
-cities = ["San Francisco", "New York", "Chicago", "Seattle", "Austin"]
-
-def generate_event():
-    return {
-        "ride_id": fake.uuid4(),
-        "driver_id": random.randint(1000, 2000),
-        "city": random.choice(cities),
-        "distance_km": round(random.uniform(1, 20), 2),
-        "fare": round(random.uniform(5, 60), 2),
-        "timestamp": time.time()
-    }
+while True:
+    try:
+        producer = KafkaProducer(
+            bootstrap_servers='kafka:9092',
+            value_serializer=lambda v: json.dumps(v).encode('utf-8')
+        )
+        break
+    except errors.NoBrokersAvailable:
+        print("Kafka not ready, retrying in 2 seconds...")
+        time.sleep(2)
 
 while True:
-    event = generate_event()
-    producer.send("ride_events", event)
-    print("Produced:", event)
-    time.sleep(0.1)
+    ride_event = {
+        "city": fake.city(),
+        "rides": fake.random_int(min=1, max=10),
+        "revenue": round(fake.pyfloat(left_digits=2, right_digits=2, positive=True), 2)
+    }
+    producer.send('ride-events', ride_event)
+    print(f"Produced ride event: {ride_event}")
+    time.sleep(1)

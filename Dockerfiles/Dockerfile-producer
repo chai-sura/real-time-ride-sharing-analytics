@@ -9,7 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy producer code
-COPY data-generator/ .
+COPY data_generator/ .
 
 # Default command
 CMD ["python", "ride_event_producer.py"]
