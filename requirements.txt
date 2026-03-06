@@ -1,0 +1,7 @@
+kafka-python
+pymongo
+fastapi
+uvicorn
+strawberry-graphql
+faker
+pandas
