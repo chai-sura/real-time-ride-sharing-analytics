@@ -26,6 +26,14 @@ flowchart LR
     F --> G[Grafana Dashboards]
 ```
 
+[Event Generator] --> Kafka --> [Processor] --> MongoDB
+                                          |
+                                          v
+                                    [GraphQL API]
+                                          |
+                                          v
+                               [Prometheus Metrics] --> [Grafana Dashboards]
+
 Event Generator: Produces simulated ride events.
 AWS MSK: Managed Kafka streaming for high throughput.
 Processor Service on AWS EKS: Consumes Kafka events, aggregates, and updates MongoDB Atlas.
@@ -36,18 +44,18 @@ Prometheus & Grafana: Monitor API performance and visualize metrics.
 
 
 
-##⚙️ Setup for Local Development
+## ⚙️ Setup for Local Development
 Note: AWS services are used in production. For local testing, Docker Compose is used.
 
 
-#Clone the repository and start the project using Docker Compose:
+# Clone the repository and start the project using Docker Compose:
 
 ```bash
 git clone <your-repo-url>
 cd real-time-ride-sharing-analytics
 ```
 
-#Run with Docker Compose
+# Run with Docker Compose
 ```bash
 docker-compose up -d
 ```
@@ -57,3 +65,11 @@ docker-compose up -d
 -MongoDB: Stores processed metrics.
 -API: GraphQL endpoint for queries.
 -Prometheus & Grafana: Monitoring dashboards.
+
+
+
+# Access Services
+
+- **GraphQL API**: http://localhost:8000/graphql
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3000
