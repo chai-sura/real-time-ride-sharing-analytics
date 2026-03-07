@@ -4,17 +4,45 @@ A real-time analytics system for ride-sharing events built with **Kafka (MSK)**,
 
 ---
 
-## 🚀 Features
+## 🏗 AWS Architecture
 
-- **Real-time event streaming** via AWS MSK.
-- **Kafka Streams processing**: Consume events, aggregate metrics, and store in MongoDB Atlas.
-- **GraphQL API**: Query city-level ride metrics and total ride statistics.
-- **Monitoring & Observability**: Track API request counts and latency with Prometheus and Grafana.
-- **Cloud-Ready Architecture**: Handles 100K+ ride events/day with <200ms latency.
+      ┌────────────┐
+      │ Ride Events│
+      │ Producer   │
+      └─────┬──────┘
+            │
+            ▼
+      ┌────────────┐
+      │ Kafka      │  (AWS MSK)
+      │ Topic:    │
+      │ ride-events│
+      └─────┬──────┘
+            │
+            ▼
+      ┌────────────┐
+      │ Processor  │  (AWS EKS / Docker)
+      │ - Consumes │
+      │   Kafka    │
+      │ - Writes   │
+      │   MongoDB  │ (AWS MongoDB Atlas)
+      └─────┬──────┘
+            │
+            ▼
+    ┌───────────────┐
+    │ GraphQL API   │  (FastAPI + Strawberry)
+    │ Exposes Ride  │
+    │ Metrics       │
+    └─────┬─────────┘
+          │
+          ▼
+   ┌───────────────┐
+   │ Prometheus    │
+   │ + Grafana     │
+   │ Monitors API  │
+   │ & Metrics     │
+   └───────────────┘
 
 ---
-
-## 🏗 AWS Architecture
 
 ```mermaid
 flowchart LR
@@ -25,51 +53,45 @@ flowchart LR
     E --> F[Prometheus Metrics]
     F --> G[Grafana Dashboards]
 ```
+## Prerequisites
 
-[Event Generator] --> Kafka --> [Processor] --> MongoDB
-                                          |
-                                          v
-                                    [GraphQL API]
-                                          |
-                                          v
-                               [Prometheus Metrics] --> [Grafana Dashboards]
-
-Event Generator: Produces simulated ride events.
-AWS MSK: Managed Kafka streaming for high throughput.
-Processor Service on AWS EKS: Consumes Kafka events, aggregates, and updates MongoDB Atlas.
-MongoDB Atlas: Stores city-wise ride metrics (rides, revenue) in the cloud.
-GraphQL API on AWS EKS: Exposes aggregated metrics.
-Prometheus & Grafana: Monitor API performance and visualize metrics.
+- Docker & Docker Compose  
+- Python 3.12 environment (for local testing)  
+- Ports:  
+  - Kafka: 9092  
+  - Zookeeper: 2181  
+  - MongoDB: 27017  
+  - API: 8000  
+  - Prometheus: 9090  
+  - Grafana: 3000  
 
 
+## Key Features
 
+- Real-time ingestion of ride events via **Kafka (AWS MSK)**
+- Stream processing and aggregation using **Dockerized Python processor** on **AWS EKS**
+- Data storage in **MongoDB Atlas** for analytics
+- **GraphQL API** for querying city-level and global ride metrics
+- Monitoring and performance tracking with **Prometheus + Grafana**
+- System designed to handle **100K+ ride events/day** with sub-200ms processing latency
 
-## ⚙️ Setup for Local Development
-Note: AWS services are used in production. For local testing, Docker Compose is used.
+---
 
+## Getting Started
 
-# Clone the repository and start the project using Docker Compose:
+Clone the repository and start the services using Docker Compose:
 
 ```bash
 git clone <your-repo-url>
 cd real-time-ride-sharing-analytics
-```
-
-# Run with Docker Compose
-```bash
 docker-compose up -d
 ```
 
--Producers: Send events to Kafka.
--Processors: Consume and aggregate events.
--MongoDB: Stores processed metrics.
--API: GraphQL endpoint for queries.
--Prometheus & Grafana: Monitoring dashboards.
-
-
-
-# Access Services
-
-- **GraphQL API**: http://localhost:8000/graphql
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3000
+### Project Structure
+├── data_generator/       # Kafka producer code
+├── ride_stream_processor.py # Kafka consumer / processor
+├── api_server.py         # FastAPI + GraphQL server
+├── docker-compose.yml    # Docker Compose setup
+├── Dockerfiles/          # Dockerfiles for each service
+├── prometheus/           # Prometheus config
+└── grafana/              # Grafana dashboard config
