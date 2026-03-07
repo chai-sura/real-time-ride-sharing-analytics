@@ -4,20 +4,35 @@ import strawberry
 from fastapi import FastAPI
 from strawberry.fastapi import GraphQLRouter
 from pymongo import MongoClient
-from prometheus_client import start_http_server, Counter, Histogram
+from prometheus_client import Counter, Histogram, make_wsgi_app
+from wsgiref.simple_server import make_server
 
-# Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
+# -------------------------
+# MongoDB connection
+# -------------------------
+client = MongoClient("mongodb://mongo:27017/")  # use service name 'mongo' in docker
 db = client["ride_analytics"]
 
+# -------------------------
 # Prometheus metrics
+# -------------------------
 REQUEST_COUNT = Counter("api_request_count", "Total number of API requests")
 REQUEST_LATENCY = Histogram("api_request_latency_seconds", "Latency of API requests in seconds")
 
-# Start Prometheus metrics server on port 8001
-threading.Thread(target=start_http_server, args=(8001,), daemon=True).start()
+# Create Prometheus WSGI app
+app_prometheus = make_wsgi_app()
 
+def start_prometheus_server():
+    # Bind to 0.0.0.0 so other containers (Prometheus) can access it
+    server = make_server('0.0.0.0', 8001, app_prometheus)
+    server.serve_forever()
+
+# Start Prometheus server in a separate thread
+threading.Thread(target=start_prometheus_server, daemon=True).start()
+
+# -------------------------
 # GraphQL types
+# -------------------------
 @strawberry.type
 class CityMetrics:
     city: str
@@ -30,7 +45,9 @@ class RideStats:
     total_revenue: float
     cities: list[CityMetrics]
 
+# -------------------------
 # GraphQL Query
+# -------------------------
 @strawberry.type
 class Query:
 
@@ -44,7 +61,8 @@ class Query:
                     city=d["city"],
                     rides=d["rides"],
                     revenue=d["revenue"]
-                ) for d in data
+                )
+                for d in data
             ]
 
     @strawberry.field
@@ -60,10 +78,10 @@ class Query:
             ]
             return RideStats(total_rides=total_rides, total_revenue=total_revenue, cities=cities)
 
-# Create GraphQL schema
+# -------------------------
+# FastAPI + GraphQL setup
+# -------------------------
 schema = strawberry.Schema(query=Query)
-
-# Create FastAPI app
 app = FastAPI()
 graphql_app = GraphQLRouter(schema)
 app.include_router(graphql_app, prefix="/graphql")

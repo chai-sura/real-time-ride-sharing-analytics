@@ -5,3 +5,4 @@ uvicorn
 strawberry-graphql
 faker
 pandas
+prometheus_client

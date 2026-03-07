@@ -11,8 +11,10 @@ services:
   kafka:
     image: wurstmeister/kafka
     environment:
+      KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
       - "9092:9092"
@@ -49,6 +51,7 @@ services:
       dockerfile: Dockerfiles/Dockerfile-api
     ports:
       - "8000:8000"
+      - "8001:8001"
     depends_on:
       - mongo
 

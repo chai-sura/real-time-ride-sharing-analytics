@@ -1,8 +1,11 @@
-FROM python:3.12-slim
+# Dockerfiles/Dockerfile-processor
+FROM python:3.12
+
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-COPY stream_processor/ .
+COPY stream_processor/ride_stream_processor.py .
+
 CMD ["python", "ride_stream_processor.py"]

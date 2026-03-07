@@ -1,31 +1,56 @@
 import json
-from kafka import KafkaConsumer
+import logging
+import time
+from kafka import KafkaConsumer, errors
 from pymongo import MongoClient
-from collections import defaultdict
 
-consumer = KafkaConsumer(
-    "ride_events",
-    bootstrap_servers="localhost:9092",
-    value_deserializer=lambda x: json.loads(x.decode("utf-8"))
-)
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-client = MongoClient("mongodb://localhost:27017/")
-db = client["ride_analytics"]
-collection = db["city_metrics"]
+# Retry until MongoDB is ready
+while True:
+    try:
+        mongo_client = MongoClient("mongodb://mongo:27017/")
+        db = mongo_client["ride_analytics"]
+        city_metrics_col = db["city_metrics"]
+        logging.info("Connected to MongoDB!")
+        break
+    except Exception as e:
+        logging.warning(f"MongoDB not ready, retrying in 2s... ({e})")
+        time.sleep(2)
 
-city_stats = defaultdict(lambda: {"rides": 0, "revenue": 0})
+# Retry until Kafka is ready
+while True:
+    try:
+        consumer = KafkaConsumer(
+            "ride-events",
+            bootstrap_servers="kafka:9092",
+            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+            auto_offset_reset="earliest",
+            group_id="ride-processor-group"
+        )
+        logging.info("Connected to Kafka!")
+        break
+    except errors.NoBrokersAvailable:
+        logging.warning("Kafka not ready, retrying in 2s...")
+        time.sleep(2)
 
+logging.info("Ride Stream Processor started. Listening to Kafka topic 'ride-events'...")
+
+# Consume events
 for message in consumer:
     event = message.value
-    city = event["city"]
+    city = event.get("city")
+    rides = event.get("rides", 1)
+    revenue = event.get("revenue", 0.0)
 
-    city_stats[city]["rides"] += 1
-    city_stats[city]["revenue"] += event["fare"]
+    if not city:
+        logging.warning(f"Skipped event without city: {event}")
+        continue
 
-    collection.update_one(
+    result = city_metrics_col.update_one(
         {"city": city},
-        {"$set": city_stats[city]},
+        {"$inc": {"rides": rides, "revenue": revenue}},
         upsert=True
     )
-
-    print("Processed:", city, city_stats[city])
+    logging.info(f"Processed event for city '{city}': rides={rides}, revenue={revenue}")
