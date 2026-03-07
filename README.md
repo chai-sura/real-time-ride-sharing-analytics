@@ -1,51 +1,26 @@
-# Real-Time Ride Sharing Analytics System
+# Real-Time Ride-Sharing Analytics on AWS
 
-This project implements a real-time analytics pipeline for ride-sharing platforms to process ride events, compute metrics, detect anomalies, and expose insights via an API.
+A real-time analytics system for ride-sharing events built with **Kafka (MSK)**, **MongoDB Atlas**, **FastAPI/GraphQL**, **Prometheus**, and **Grafana**, deployed on **AWS**.
 
-## Architecture
+---
 
-Ride Events → Kafka (AWS MSK) → Kafka Streams Processing → MongoDB Atlas → GraphQL API → Dashboard
+## 🚀 Features
 
-## Key Features
+- **Real-time event streaming** via AWS MSK.
+- **Kafka Streams processing**: Consume events, aggregate metrics, and store in MongoDB Atlas.
+- **GraphQL API**: Query city-level ride metrics and total ride statistics.
+- **Monitoring & Observability**: Track API request counts and latency with Prometheus and Grafana.
+- **Cloud-Ready Architecture**: Handles 100K+ ride events/day with <200ms latency.
 
-- Processes **100K+ ride events/day** using Kafka Streams
-- Real-time driver and city ride metrics
-- Detects anomalies in ride activity
-- Stores aggregated metrics in **MongoDB Atlas**
-- Provides insights through **GraphQL API**
-- Performance monitoring via **Grafana dashboards**
-- Containerized deployment using **Docker + Kubernetes (EKS)**
+---
 
-## Tech Stack
+## 🏗 AWS Architecture
 
-- Python
-- Apache Kafka Streams
-- AWS MSK
-- MongoDB Atlas
-- GraphQL
-- Docker
-- Kubernetes (EKS)
-- Grafana
-
-## Example Metrics Generated
-
-- Rides per city
-- Average trip distance
-- Driver utilization
-- Surge activity detection
-- Ride demand spikes
-
-## Project Structure
-
-data-generator → simulates ride events  
-kafka-streams-app → processes real-time streams  
-graphql-api → exposes aggregated metrics  
-dashboards → monitoring dashboards  
-
-## How to Run Locally
-
-1. Start Kafka
-2. Run ride event producer
-3. Run stream processor
-4. Start GraphQL API
-5. View metrics via API or Grafana
+```mermaid
+flowchart LR
+    A[Event Generator] --> B[AWS MSK Kafka Broker]
+    B --> C[Processor Service on AWS EKS]
+    C --> D[MongoDB Atlas]
+    C --> E[GraphQL API on AWS EKS]
+    E --> F[Prometheus Metrics]
+    F --> G[Grafana Dashboards]
