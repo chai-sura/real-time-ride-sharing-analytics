@@ -24,3 +24,36 @@ flowchart LR
     C --> E[GraphQL API on AWS EKS]
     E --> F[Prometheus Metrics]
     F --> G[Grafana Dashboards]
+```
+
+Event Generator: Produces simulated ride events.
+AWS MSK: Managed Kafka streaming for high throughput.
+Processor Service on AWS EKS: Consumes Kafka events, aggregates, and updates MongoDB Atlas.
+MongoDB Atlas: Stores city-wise ride metrics (rides, revenue) in the cloud.
+GraphQL API on AWS EKS: Exposes aggregated metrics.
+Prometheus & Grafana: Monitor API performance and visualize metrics.
+
+
+
+
+##⚙️ Setup for Local Development
+Note: AWS services are used in production. For local testing, Docker Compose is used.
+
+
+#Clone the repository and start the project using Docker Compose:
+
+```bash
+git clone <your-repo-url>
+cd real-time-ride-sharing-analytics
+```
+
+#Run with Docker Compose
+```bash
+docker-compose up -d
+```
+
+-Producers: Send events to Kafka.
+-Processors: Consume and aggregate events.
+-MongoDB: Stores processed metrics.
+-API: GraphQL endpoint for queries.
+-Prometheus & Grafana: Monitoring dashboards.
